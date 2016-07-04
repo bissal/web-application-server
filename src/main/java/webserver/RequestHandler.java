@@ -34,12 +34,10 @@ public class RequestHandler extends Thread {
 		
 		try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
 			Request request = parser.parseRequest(in);
-			
 			String path = request.getPath();
 			
 			if (path.equals("/")) {
 				byte[] body = "Hello World".getBytes();
-				
 				sendOKResponse(body, out);
 			}
 			
@@ -57,6 +55,13 @@ public class RequestHandler extends Thread {
 			
 			if (path.equals("/user/login")) {				
 				login(out, request);
+			}
+			
+			if (path.equals("/user/list")) {
+				String cookie = request.getRequestHeader("Cookie");
+				if (cookie.equals("logined=true")) {
+					
+				}
 			}
 			
 		} catch (IOException e) {
