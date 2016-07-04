@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -40,33 +41,51 @@ public class RequestHandler extends Thread {
 				byte[] body = "Hello World".getBytes();
 				sendOKResponse(body, out);
 			}
-			
 			File requested = new File("./webapp" + path);
 			log.debug("requested file: " + requested);
 			if (requested.exists()) {
 				byte[] body = Files.readAllBytes(requested.toPath());
 				sendOKResponse(body, out);
 			}
-			
 			if (path.equals("/user/create")) {				
 				addUser(request);
 				send302FoundResponse(out);
 			}
-			
 			if (path.equals("/user/login")) {				
 				login(out, request);
 			}
 			
 			if (path.equals("/user/list")) {
-				String cookie = request.getRequestHeader("Cookie");
-				if (cookie.equals("logined=true")) {
-					
-				}
+				showUserList(out, request);
 			}
 			
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
+	}
+
+	private void showUserList(OutputStream out, Request request) {
+		String cookie = request.getRequestHeader("Cookie");
+		if (cookie.equals("logined=true") == false) {					
+			return;
+		}
+
+		Collection<User> users = DataBase.findAll();
+		StringBuilder sb = new StringBuilder();
+		sb.append("<table border='1'>");
+		for (User user : users) {
+			sb.append("<tr>");
+			sb.append("<td>" + user.getUserId() + "</td>");
+			sb.append("<td>" + user.getName() + "</td>");
+			sb.append("<td>" + user.getEmail() + "</td>");
+			sb.append("</tr>");
+		}
+		sb.append("</table>");
+		byte[] body = sb.toString().getBytes();
+		
+		DataOutputStream dos = new DataOutputStream(out);
+		response200Header(dos, body.length);
+		responseBody(dos, body);
 	}
 
 	private void login(OutputStream out, Request request) {
